@@ -1,5 +1,7 @@
 package main
 
 func main() {
-	println("Hello World")
+	println("=== GONVERTER ===")
+	println("Gonverter converts images or docs to PDF.\n")
+
 }
