@@ -1,10 +1,24 @@
 package input
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"io"
+)
 
-func GetUserInput(message string) (any, error) {
+func GetUserInput(message string, r io.Reader) (string, error) {
 	if message == "" {
-		return nil, errors.New("Expected a system message but got an empty text")
+		return "", errors.New("Expected a system message but got an empty text")
 	}
-	return "", nil
+
+	print(message, ": ")
+
+	var userInput string
+	_, scanError := fmt.Fscanln(r, &userInput)
+
+	if scanError != nil {
+		return "", scanError
+	}
+
+	return userInput, nil
 }
