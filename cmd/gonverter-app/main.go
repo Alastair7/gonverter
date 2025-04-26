@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/Alastair7/gonverter/internal/input"
+	"github.com/Alastair7/gonverter/internal/pdf"
 )
 
 func main() {
@@ -16,4 +17,12 @@ func main() {
 	}
 
 	println("User Input: ", userInput)
+
+	pdfManager := pdf.NewPdfManager("L", "mm", "A4", "", "file.pdf")
+
+	pdfManager.NewPDF()
+	writeErr := pdfManager.Write()
+	if writeErr != nil {
+		println("Error writing pdf file: ", writeErr.Error())
+	}
 }
