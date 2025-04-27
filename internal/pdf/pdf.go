@@ -54,8 +54,11 @@ func (p *PdfManager) Write() error {
 		Scale Factor = dimension of new shape / dimension of original shape
 		Scale Up = Larger dimension / Smaller dimension
 		Scale Down = Smaller dimension / Larger dimension
+
+		A4 = 297x210 mm
 	*/
-	pdfManager.ImageOptions("image2.png", 0, 0, 300, 170, false, fpdf.ImageOptions{ImageType: "png", ReadDpi: true, AllowNegativePosition: false}, 0, "")
+
+	pdfManager.ImageOptions("image2.png", 0, 0, 285, 180, false, fpdf.ImageOptions{ImageType: "png", ReadDpi: true, AllowNegativePosition: false}, 0, "")
 
 	pdfErr := pdfManager.OutputFileAndClose(p.OutputDir)
 	if pdfErr != nil {

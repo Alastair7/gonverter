@@ -16,9 +16,9 @@ func main() {
 		println("Error obtaining user input: ", inputError.Error())
 	}
 
-	println("User Input: ", userInput)
+	println(userInput)
 
-	pdfManager := pdf.NewPdfManager("L", "mm", "A4", "", "file.pdf")
+	pdfManager := pdf.NewPdfManager("P", "mm", "A4", "", "file.pdf")
 
 	pdfManager.NewPDF()
 	writeErr := pdfManager.Write()
