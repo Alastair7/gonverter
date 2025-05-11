@@ -42,7 +42,7 @@ func (p *PdfManager) NewPDF() {
 	p.Fpdf = pdf
 }
 
-func (p *PdfManager) Write() error {
+func (p *PdfManager) Write(width float64, height float64) error {
 	pdfManager := p.Fpdf
 
 	if p.OutputDir == "" {
@@ -58,7 +58,7 @@ func (p *PdfManager) Write() error {
 		A4 = 297x210 mm
 	*/
 
-	pdfManager.ImageOptions("image2.png", 0, 0, 285, 180, false, fpdf.ImageOptions{ImageType: "png", ReadDpi: true, AllowNegativePosition: false}, 0, "")
+	pdfManager.ImageOptions("image2.png", 0, 0, width, height, false, fpdf.ImageOptions{ImageType: "png", ReadDpi: true, AllowNegativePosition: false}, 0, "")
 
 	pdfErr := pdfManager.OutputFileAndClose(p.OutputDir)
 	if pdfErr != nil {
