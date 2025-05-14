@@ -1,8 +1,8 @@
 package file
 
 import (
-	"bufio"
 	"fmt"
+	"image"
 	"net/http"
 
 	"codeberg.org/go-pdf/fpdf"
@@ -16,6 +16,12 @@ func (*FileHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	parsingErr := req.ParseMultipartForm(5 << 20)
 	if parsingErr != nil {
 		panic(parsingErr)
+	}
+
+	if req.MultipartForm != nil {
+		defer func() {
+			_ = req.MultipartForm.RemoveAll()
+		}()
 	}
 
 	file, header, formErr := req.FormFile("file")
@@ -34,22 +40,33 @@ func (*FileHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "The file extension is not valid")
 	}
 
-	// TODO: PDF Logic: Re-escalate image and add it to a PDF
-	// Get image width and height and convert them to mm
-	width, height := utils.ScaleIfNecessary(0, 0)
+	img, _, decodeErr := image.Decode(file)
+	if decodeErr != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Error decoding the image")
+	}
+
+	originalWidth, originalHeight := utils.GetImageDimensionsInMm(img)
+	width, height := utils.ScaleIfNecessary(originalWidth, originalHeight)
+	imgType := utils.GetImageType(header.Filename)
 
 	pdfClient := document.NewPdfDocument()
 	pdfClient.AddPage()
 
-	fileReader := bufio.NewReader(file)
+	opts := fpdf.ImageOptions{
+		ImageType:             imgType,
+		ReadDpi:               true,
+		AllowNegativePosition: false,
+	}
 
-	// Create a image string with the image stream received from the user
-	pdfClient.RegisterImageOptionsReader(header.Filename, fpdf.ImageOptions{}, fileReader)
-	pdfClient.ImageOptions("avatar.png", 0, 0,
+	pdfClient.RegisterImageOptionsReader(header.Filename, opts, file)
+
+	pdfClient.ImageOptions(header.Filename, 0, 0,
 		width, height, false,
-		fpdf.ImageOptions{ImageType: "png", ReadDpi: true, AllowNegativePosition: false}, 0, "")
+		opts, 0, "")
 
-	pdfErr := pdfClient.OutputFileAndClose("image.pdf")
+	outputName := utils.GetImageNameWithoutExtension(header.Filename)
+	pdfErr := pdfClient.OutputFileAndClose(outputName + ".pdf")
 	if pdfErr != nil {
 		panic(pdfErr)
 	}
