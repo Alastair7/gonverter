@@ -2,6 +2,7 @@ package utils
 
 import (
 	"image"
+	"path/filepath"
 	"strings"
 )
 
@@ -16,9 +17,8 @@ func GetImageDimensionsInMm(img image.Image) (float64, float64) {
 }
 
 func GetImageType(name string) string {
-	extension := strings.Split(name, ".")[1]
-
-	return extension
+	extension := filepath.Ext(name)
+	return extension[1:]
 }
 
 func GetImageNameWithoutExtension(name string) string {

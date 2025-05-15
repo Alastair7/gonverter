@@ -1,8 +1,10 @@
 package file
 
 import (
+	"bytes"
 	"fmt"
 	"image"
+	"io"
 	"net/http"
 
 	"codeberg.org/go-pdf/fpdf"
@@ -40,7 +42,17 @@ func (*FileHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "The file extension is not valid")
 	}
 
-	img, _, decodeErr := image.Decode(file)
+	buf := new(bytes.Buffer)
+	_, copyErr := io.Copy(buf, file)
+	if copyErr != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Error decoding the image")
+
+	}
+
+	data := buf.Bytes()
+
+	img, _, decodeErr := image.Decode(bytes.NewReader(data))
 	if decodeErr != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error decoding the image")
@@ -48,6 +60,7 @@ func (*FileHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	originalWidth, originalHeight := utils.GetImageDimensionsInMm(img)
 	width, height := utils.ScaleIfNecessary(originalWidth, originalHeight)
+
 	imgType := utils.GetImageType(header.Filename)
 
 	pdfClient := document.NewPdfDocument()
@@ -59,14 +72,18 @@ func (*FileHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		AllowNegativePosition: false,
 	}
 
-	pdfClient.RegisterImageOptionsReader(header.Filename, opts, file)
+	pdfClient.RegisterImageOptionsReader(header.Filename, opts, bytes.NewReader(data))
 
 	pdfClient.ImageOptions(header.Filename, 0, 0,
 		width, height, false,
 		opts, 0, "")
 
 	outputName := utils.GetImageNameWithoutExtension(header.Filename)
-	pdfErr := pdfClient.OutputFileAndClose(outputName + ".pdf")
+
+	w.Header().Set("Content-Type", "application/pdf")
+
+	w.Header().Set("Content-Disposition", "attachment; filename=\""+outputName+".pdf\"")
+	pdfErr := pdfClient.Output(w)
 	if pdfErr != nil {
 		panic(pdfErr)
 	}

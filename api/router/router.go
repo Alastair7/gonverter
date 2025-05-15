@@ -13,7 +13,21 @@ func SetupRouter() http.Handler {
 	fileHandler := file.NewFileHandler()
 
 	router.HandleFunc("/checkhealth", checkhealthHandler)
-	router.Handle("/api/file", fileHandler)
+	router.Handle("/api/file", checkCORS(fileHandler))
 
 	return router
+}
+
+func checkCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+
+		if origin != "*" {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
+
+		w.Header().Add("Vary", "Origin")
+
+		next.ServeHTTP(w, r)
+	})
 }
